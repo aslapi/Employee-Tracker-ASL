@@ -1,11 +1,11 @@
 const inquirer = require('inquirer');
 const express = require('express');
-const { Pool } = require('pg'); // Adjust the path as necessary
-// const { mainQuestions, addDepartment, addRole, addEmployee, viewDepartments, viewRoles, viewEmployees, updateEmployeeRole, exit } = require('./questions'); // Adjust the path as necessary
+const { Pool } = require('pg');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Connecting to the business_db database
 const pool = new Pool({
     user: 'postgres',
     password: 'mnthunder',
@@ -13,6 +13,7 @@ const pool = new Pool({
     database: 'business_db'
 });
 
+// Connecting to the database
 pool.connect();
 
 app.use(express.json());
@@ -22,6 +23,7 @@ app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
 
+// Main menu questions
 const mainQuestions = [
     {
         type: 'list',
@@ -39,6 +41,7 @@ const mainQuestions = [
     }
 ];
 
+// Questions when adding a new department
 const addDepartmentQuestions = [
     {
         type: 'input',
@@ -47,6 +50,7 @@ const addDepartmentQuestions = [
     }
 ];
 
+// Questions when adding a new role
 const addRoleQuestions = [
     {
         type: 'input',
@@ -65,6 +69,7 @@ const addRoleQuestions = [
     }
 ];
 
+// Questions when adding a new employee
 const addEmployeeQuestions = [
     {
         type: 'input',
@@ -78,22 +83,19 @@ const addEmployeeQuestions = [
     },
     {
         type: 'input',
-        name: 'role_id',
+        name: 'roleId',
         message: 'Role ID of employee?'
-    },
-    {
-        type: 'input',
-        name: 'employeeDepartment',
-        message: 'Department ID of employee?'
     }
 ];
 
+// Main menu for the application
 function mainMenu() {
     inquirer.prompt(mainQuestions).then((answers) => {
         switch (answers.menuSelection) {
+            // Add new department to the database
             case 'Add a department':
-            inquirer.prompt(addDepartmentQuestions).then((answers) => {
-                    pool.query('INSERT INTO department (name) VALUES ($1)', [answers.departmentName], (error, results) => {
+                inquirer.prompt(addDepartmentQuestions).then((answers) => {
+                    pool.query('INSERT INTO department (department_name) VALUES ($1)', [answers.departmentName], (error, results) => {
                         if (error) {
                             console.log(error);
                         } else {
@@ -103,9 +105,10 @@ function mainMenu() {
                     });
                 });
                 break;
+            // Add new role to the database
             case 'Add a role':
                 inquirer.prompt(addRoleQuestions).then((answers) => {
-                    pool.query('INSERT INTO role (title) VALUES ($1)', [answers.roleName], (error, results) => {
+                    pool.query('INSERT INTO role (title, salary, department_id) VALUES ($1, $2, $3)', [answers.roleTitle, answers.employeeSalary, answers.roleDepartment], (error, results) => {
                         if (error) {
                             console.log(error);
                         } else {
@@ -115,9 +118,10 @@ function mainMenu() {
                     });
                 });
                 break;
+            // Add new employee to the database
             case 'Add an employee':
                 inquirer.prompt(addEmployeeQuestions).then((answers) => {
-                    pool.query('INSERT INTO employee (first_name, last_name) VALUES ($1, $2)', [answers.firstName, answers.lastName], (error, results) => {
+                    pool.query('INSERT INTO employee (first_name, last_name, role_id) VALUES ($1, $2, $3)', [answers.employeeFirstName, answers.employeeLastName, answers.roleId], (error, results) => {
                         if (error) {
                             console.log(error);
                         } else {
@@ -127,106 +131,40 @@ function mainMenu() {
                     });
                 });
                 break;
-            case 'View Departments':
-                inquirer.prompt(viewDepartments).then((answers) => {
-                    switch (answers.viewDepartments) {
-                        case 'View All Departments':
-                            pool.query('SELECT * FROM department', (error, results) => {
-                                if (error) {
-                                    console.log(error);
-                                } else {
-                                    console.table(results.rows);
-                                }
-                                mainMenu();
-                            });
-                            break;
-                        case 'View Department Budget':
-                            pool.query('SELECT department.name, SUM(role.salary) FROM department JOIN role ON department.id = role.department_id GROUP BY department.name', (error, results) => {
-                                if (error) {
-                                    console.log(error);
-                                } else {
-                                    console.table(results.rows);
-                                }
-                                mainMenu();
-                            });
-                            break;
+            // View all departments in the database
+            case 'View departments':
+                pool.query('SELECT * FROM department', (error, results) => {
+                    if (error) {
+                        console.log(error);
+                    } else {
+                        console.table(results.rows);
                     }
+                    mainMenu();
                 });
                 break;
-            case 'View Roles':
-                inquirer.prompt(viewRoles).then((answers) => {
-                    switch (answers.viewRoles) {
-                        case 'View All Roles':
-                            pool.query('SELECT * FROM role', (error, results) => {
-                                if (error) {
-                                    console.log(error);
-                                } else {
-                                    console.table(results.rows);
-                                }
-                                mainMenu();
-                            });
-                            break;
-                        case 'View Roles by Department':
-                            pool.query('SELECT role.title, department.name FROM role JOIN department ON role.department_id = department.id', (error, results) => {
-                                if (error) {
-                                    console.log(error);
-                                } else {
-                                    console.table(results.rows);
-                                }
-                                mainMenu();
-                            });
-                            break;
+            // View all roles in the database
+            case 'View roles':
+                pool.query('SELECT * FROM role', (error, results) => {
+                    if (error) {
+                        console.log(error);
+                    } else {
+                        console.table(results.rows);
                     }
+                    mainMenu();
                 });
                 break;
-            case 'View Employees':
-                inquirer.prompt(viewEmployees).then((answers) => {
-                    switch (answers.viewEmployees) {
-                        case 'View All Employees':
-                            pool.query('SELECT * FROM employee', (error, results) => {
-                                if (error) {
-                                    console.log(error);
-                                } else {
-                                    console.table(results.rows);
-                                }
-                                mainMenu();
-                            });
-                            break;
-                        case 'View Employees by Manager':
-                            pool.query('SELECT employee.first_name, employee.last_name, manager.first_name AS manager_first_name, manager.last_name AS manager_last_name FROM employee JOIN employee AS manager ON employee.manager_id = manager.id', (error, results) => {
-                                if (error) {
-                                    console.log(error);
-                                } else {
-                                    console.table(results.rows);
-                                }
-                                mainMenu();
-                            });
-                            break;
-                        case 'View Employees by Department':
-                            pool.query('SELECT employee.first_name, employee.last_name, department.name FROM employee JOIN role ON employee.role_id = role.id JOIN department ON role.department_id = department.id', (error, results) => {
-                                if (error) {
-                                    console.log(error);
-                                } else {
-                                    console.table(results.rows);
-                                }
-                                mainMenu();
-                            });
-                            break;
+            // View all employees in the database
+            case 'View employees':
+                pool.query('SELECT * FROM employee', (error, results) => {
+                    if (error) {
+                        console.log(error);
+                    } else {
+                        console.table(results.rows);
                     }
+                    mainMenu();
                 });
                 break;
-            case 'Update an employee role':
-                inquirer.prompt(updateEmployeeRole).then((answers) => {
-                    pool.query('UPDATE employee SET role_id = $1 WHERE first_name = $2 AND last_name = $3', [answers.roleId, answers.employeeFirstName, answers.employeeLastName], (error, results) => {
-                        if (error) {
-                            console.log(error);
-                        } else {
-                            console.log('Employee role updated successfully!');
-                        }
-                        mainMenu();
-                    });
-                });
-                break;
+            // Exit the application
             case 'Exit':
                 console.log('Goodbye!');
                 pool.end();
