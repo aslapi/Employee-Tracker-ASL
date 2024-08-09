@@ -16,5 +16,5 @@ Go to https://github.com/aslapi/Employee-Tracker-ASL and clone the repository to
 
 Once you've cloned the repository and installed dependencies, run "npm start" You will be prompted to view all roles/departments/employees and create new roles/departments/employees.
 
-Below is a link to a video that walks you through how to use the application!
+Below is a link to a video that walks you through how to use the application!  
 [Video Tutorial](https://app.screencastify.com/v3/watch/kdAljw1D7KJqm4XYJkFW)
